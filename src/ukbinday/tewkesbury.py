@@ -30,20 +30,20 @@ class TewksburyLookup(BinLookup):
 
         if housenumber:
             if housenumber.isdigit():
-                logger.info("Looking for house number %s", housenumber)
+                logger.debug("Looking for house number %s", housenumber)
                 candidates = [x["uprn"] for x in rounddata['body'] if x["propertyNumber"] == int(housenumber)]
             else:
-                logger.info("Looking for %s", housenumber)
+                logger.debug("Looking for %s", housenumber)
                 candidates = [x["uprn"] for x in rounddata['body'] if x["fullAddress"].startswith(housenumber)]
         else:
-            logger.info("Checking whole postcode")
+            logger.debug("Checking whole postcode")
             candidates = [x["uprn"] for x in rounddata["body"]]
 
         if not candidates:
             logger.error("No candiates found")
             raise BinDayException(f"Error: need more specific house number")
                   
-        logger.info("Potential Addresses: %d", len(candidates))
+        logger.debug("Potential Addresses: %d", len(candidates))
 
         if len(candidates) != 1:
             raise BinDayException(f"Error: need more specific house number")
