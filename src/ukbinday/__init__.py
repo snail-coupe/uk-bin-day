@@ -1,15 +1,15 @@
 ''' Moduke to look up bin collection dates in the UK '''
 
 from __future__ import annotations
-from datetime import datetime
+import datetime
 
 import urllib.request
+import urllib.parse
 import glob
 import os
 import importlib
 import logging
-
-from typing import Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +21,14 @@ class BinDayException(BaseException):
 class BinDays():
     ''' Return class for BinLookup '''
     def __init__(self) -> None:
-        self.days: Dict[str, datetime.date] = {}
+        self.days: dict[str, datetime.date] = {}
 
     def add(self, label: str, collection: datetime.date):
         ''' add a collection event '''
         self.days[label] = collection
 
-    def __str__(self):
-        ret: List[str] = []
+    def __str__(self) -> str:
+        ret: list[str] = []
         for binday in sorted(self.days.items(), key=lambda x: (x[1], x[0])):
             ret.append(f"{binday[0]}: {binday[1]:%a %d %b}")
         return "\n".join(ret)
@@ -37,15 +37,15 @@ class BinDays():
 class BinLookup():
     ''' This base class specifies an Interface for commands '''
 
-    lookups: Dict[str, BinLookup] = {}  # class leve lookup
+    lookups: dict[str, type[BinLookup]] = {}  # class leve lookup
 
     authority: str = "Unknown"
 
-    def __init_subclass__(cls, /, **kwargs):
+    def __init_subclass__(cls, /, **kwargs: Any):
         super().__init_subclass__(**kwargs)
         cls.lookups[cls.authority] = cls
 
-    def lookup(self, housenumber: str = None, postcode: str = None) -> BinDays:
+    def lookup(self, housenumber: str|None, postcode: str) -> BinDays:
         ''' overload with a function returning a string with the binday info '''
         raise NotImplementedError(
             f"Cannot lookup for {self.authority}"
@@ -55,7 +55,7 @@ class BinLookup():
 class BinDayGetter():
     ''' A UK level binday checker '''
 
-    def __init__(self, postcode: str = None, housenumber: str = None) -> None:
+    def __init__(self, postcode: str, housenumber: str|None) -> None:
         self.post_code = postcode
         self.house_number = housenumber
 

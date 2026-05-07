@@ -14,18 +14,17 @@ logger = logging.getLogger(__name__)
 
 class _AddressCB(HTMLParser):  # pylint: disable=abstract-method
 
-    search_for: str = None
-    result: str = None
+    search_for: str
+    result: str
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs:list[tuple[str, str | None]]
+):
         if tag == 'a':
             trib_dict: Dict[str, str] = {}
             for (trib, value) in attrs:
-                trib_dict[trib] = value
-            if "href" in trib_dict and \
-                    trib_dict["href"].startswith("/mylocal/viewresults") and \
-                    "title" in trib_dict and \
-                    trib_dict["title"].startswith("Link to nearest information about the address "):
+                if value:
+                    trib_dict[trib] = value
+            if "href" in trib_dict and                    trib_dict["href"].startswith("/mylocal/viewresults") and                    "title" in trib_dict and                    trib_dict["title"].startswith("Link to nearest information about the address "):
                 location_id = trib_dict['href'][21:]
                 house_id = trib_dict['title'][46:]
                 # logger.debug(f"{location_id}:{house_id}")
@@ -40,16 +39,17 @@ class _CollectionCB(HTMLParser):  # pylint: disable=abstract-method
     intag = False
     data: str = ""
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag: str, attrs:list[tuple[str, str | None]]):
         if tag == 'li':
             trib_dict: Dict[str, str] = {}
             for (trib, value) in attrs:
-                trib_dict[trib] = value
+                if value:
+                    trib_dict[trib] = value
             if "class" in trib_dict and trib_dict["class"] == "resultListItem":
                 self.intag = True
                 self.data = ""
 
-    def handle_endtag(self, tag):
+    def handle_endtag(self, tag:str):
         if tag == 'li':
             self.intag = False
             self.data = self.data.strip()
@@ -77,7 +77,7 @@ class DorsetLookup(BinLookup):
     ''' BinLookup class for dorset '''
     authority: str = "dorset"
 
-    def lookup(self, housenumber: str = None, postcode: str = None) -> BinDays:
+    def lookup(self, housenumber: str |None, postcode: str) -> BinDays:
         if not postcode:
             raise BinDayException("Missing parameter postcode")
         if not housenumber:

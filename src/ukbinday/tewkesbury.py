@@ -15,7 +15,7 @@ class TewksburyLookup(BinLookup):
     ''' BinLookup class for tewkesbury '''
     authority: str = "tewkesbury"
 
-    def lookup(self, housenumber: str = None, postcode: str = None) -> BinDays:
+    def lookup(self, housenumber: str |None, postcode: str |None) -> BinDays:
         if not housenumber:
             raise TypeError("Missing parameter housenumber")
         if not postcode:
@@ -26,7 +26,7 @@ class TewksburyLookup(BinLookup):
         )
         rounddata = json.loads(round_lookup.read())
         if rounddata['status'] != "OK":
-            raise BinDayException(f"Error: {data['status']}")
+            raise BinDayException(f"Error: {rounddata['status']}")
 
         if housenumber:
             if housenumber.isdigit():
@@ -41,32 +41,24 @@ class TewksburyLookup(BinLookup):
 
         if not candidates:
             logger.error("No candiates found")
-            raise BinDayException(f"Error: need more specific house number")
+            raise BinDayException("Error: need more specific house number")
                   
         logger.debug("Potential Addresses: %d", len(candidates))
 
         if len(candidates) != 1:
-            raise BinDayException(f"Error: need more specific house number")
+            raise BinDayException("Error: need more specific house number")
 
-        allrns = {}
-        for uprn in candidates:
-            uprn_lookup = urllib.request.urlopen(
-                f"https://api-2.tewkesbury.gov.uk/incab/rounds/{uprn}/next-collection"
-            )
-            uprndata = json.loads(uprn_lookup.read())
-            if uprndata['status'] != "OK":
-                next
-            uprnday = uprndata["body"][0]["roundInfo"]
-            allrns[uprnday] = uprndata["body"]
-
-        if len(allrns) != 1:
-            raise BinDayException(f"Error: need more specific house number")
+        uprn_lookup = urllib.request.urlopen(
+            f"https://api-2.tewkesbury.gov.uk/incab/rounds/{candidates[0]}/next-collection"
+        )
+        uprndata: dict[str, dict[str,str]] = json.loads(uprn_lookup.read())
 
         ret = BinDays()
 
-        data = allrns[uprnday]
+        rd: list[tuple[str, datetime.date]] = []
+        for key, value in uprndata.items():
+            rd.append((key, datetime.date.fromisoformat(value['nextCollectionDate'].split('T')[0])))
 
-        for cday in sorted(data, key=lambda x: x['NextCollection']):
-            ret.add(cday['collectionType'], datetime.date.fromisoformat(cday['NextCollection']))
-
+        for ctype in sorted(rd, key=lambda x: x[1]):
+            ret.add(ctype[0].capitalize(), ctype[1])
         return ret

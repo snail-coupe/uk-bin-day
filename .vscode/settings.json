@@ -1,0 +1,6 @@
+{
+    "python.analysis.autoFormatStrings": true,
+    "ruff.lineLength": 120,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "pylint.args": ["--maxlinelength=120"]
+}
